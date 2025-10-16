@@ -3,12 +3,14 @@ import { motion } from 'framer-motion';
 import { useConnectionStore } from '../stores/connectionStore.js';
 import { useGameConnection } from '../hooks/useGameConnection.js';
 import Button from './ui/Button.jsx';
+import Tutoriel from './Tutoriel.jsx';
 
 const ConnectionScreen = () => {
   const [pseudo, setPseudo] = useState('');
   const [playerCount, setPlayerCount] = useState(4);
   const [isPrivate, setIsPrivate] = useState(false);
   const [roomCode, setRoomCode] = useState('');
+  const [showTutorial, setShowTutorial] = useState(false);
   
   const { error, playerPseudo, setPlayerPseudo } = useConnectionStore();
   const { connect, isConnecting } = useGameConnection();
@@ -25,12 +27,6 @@ const ConnectionScreen = () => {
     };
     
     await connect(pseudo, options);
-  };
-
-  const handleQuickJoin = async () => {
-    const quickPseudo = playerPseudo || `Joueur_${Math.floor(Math.random() * 1000)}`;
-    setPlayerPseudo(quickPseudo);
-    await connect(quickPseudo);
   };
 
   return (
@@ -135,36 +131,32 @@ const ConnectionScreen = () => {
           <div className="space-y-3">
             <Button
               onClick={handleConnect}
-              disabled={!pseudo.trim() || isConnecting}
+              disabled={!pseudo.trim() }
               loading={isConnecting}
               variant="primary"
               className="w-full"
             >
-              {isPrivate ? 'Rejoindre la room' : 'Créer/Rejoindre une partie'}
+              {isPrivate ? 'Rejoindre une room spécifique' : 'Créer/Rejoindre une partie aléatoire'}
             </Button>
 
             <Button
-              onClick={handleQuickJoin}
+              onClick={() => setShowTutorial(true)}
               disabled={isConnecting}
-              variant="secondary"
+              variant="warning"
               className="w-full"
             >
-              Rejoindre rapidement
+              📚 Comment jouer ?
             </Button>
           </div>
         </div>
 
-        {/* Informations sur le jeu */}
-        <div className="mt-8 pt-6 border-t border-white/20">
-          <h3 className="text-sm font-medium mb-2">À propos du jeu</h3>
-          <ul className="text-xs text-gray-300 space-y-1">
-            <li>• 3-4 joueurs</li>
-            <li>• Phase de draft + placement stratégique</li>
-            <li>• Construisez une pyramide pour votre famille secrète</li>
-            <li>• Utilisez les pouvoirs spéciaux des figures</li>
-          </ul>
-        </div>
+      
       </div>
+
+      {/* Tutoriel Modal */}
+      {showTutorial && (
+        <Tutoriel onClose={() => setShowTutorial(false)} />
+      )}
     </motion.div>
   );
 };
