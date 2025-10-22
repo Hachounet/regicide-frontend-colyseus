@@ -13,6 +13,7 @@ import DraftScreen from './components/DraftScreen';
 import GameScreen from './components/GameScreen';
 import ResultsScreen from './components/ResultsScreen';
 import LoadingScreen from './components/LoadingScreen';
+import Header from './components/ui/Header';
 
 // Client React Query
 const queryClient = new QueryClient({
@@ -90,15 +91,7 @@ function App() {
         ) : (
           // Mode normal avec header et footer pour les autres écrans
           <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 min-h-full flex flex-col">
-            {/* Header */}
-            <header className="text-center mb-4 sm:mb-6 lg:mb-8">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
-                Regicide
-              </h1>
-              <p className="text-gray-300 mt-1 sm:mt-2 text-xs sm:text-sm lg:text-base">
-                Jeu de cartes stratégique multijoueur
-              </p>
-            </header>
+            <Header />
 
             {/* Main Content */}
             <main className="flex-1 flex items-center justify-center">
@@ -108,12 +101,7 @@ function App() {
               {currentScreen === 'results' && <ResultsScreen />}
             </main>
 
-            {/* Footer */}
-            <footer className="text-center mt-4 sm:mt-6 lg:mt-8 text-gray-400 text-xs sm:text-sm">
-              <p>
-                Développé avec React, Vite et Colyseus
-              </p>
-            </footer>
+          
           </div>
         )}
 

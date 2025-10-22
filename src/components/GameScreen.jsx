@@ -5,6 +5,8 @@ import { useGameConnection } from '../hooks/useGameConnection.js';
 import Card from './ui/Card.jsx';
 import Button from './ui/Button.jsx';
 import EmojiWheel from './ui/EmojiWheel.jsx';
+import PlayerHandMobile from './ui/PlayerHandMobile.jsx';
+import PlayerHandPlayPhase from './ui/PlayerHandPlayPhase.jsx';
 import { CARD_VALUES, GAME_ACTIONS } from '../types/game.js';
 
 const GameScreen = () => {
@@ -384,15 +386,6 @@ const GameScreen = () => {
     }
   };
 
-  // Calculer la position des joueurs en ligne en haut à droite
-  const getPlayerPosition = (index) => {
-    // Tous les joueurs alignés horizontalement en haut à droite
-    return { 
-      top: '10px', 
-      right: `${10 + index * 120}px` // Espacement de 120px entre chaque joueur depuis la droite
-    };
-  };
-
   // Vérifier si une position est sélectionnée pour l'échange (Dame)
   const isQueenExchangeTarget = (row, col) => {
     return queenExchangeTargets.some(target => target.row === row && target.col === col);
@@ -402,63 +395,65 @@ const GameScreen = () => {
   const renderPlayer = (player, visualIndex) => {
     const isMe = player.sessionId === mySessionId;
     const isCurrentPlayer = gameState?.players[gameState?.currentPlayerIndex]?.sessionId === player.sessionId;
-    const backendIndex = players.findIndex(p => p.sessionId === player.sessionId);
-    const position = getPlayerPosition(visualIndex);
     const isJackTarget = jackTargetPlayer?.sessionId === player.sessionId;
     const canSelectForJack = specialPowerMode === 'jack' && !isMe;
     
     return (
       <motion.div
         key={player.sessionId}
-        className="absolute flex flex-col items-center"
-        style={position}
+        className="flex flex-col items-center mx-2 sm:mx-3 md:mx-4"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: visualIndex * 0.2 }}
         onClick={canSelectForJack ? () => handleJackPlayerSelect(player) : undefined}
       >
-        {/* Avatar du joueur modernisé */}
+        {/* Avatar du joueur avec indicateur de tour */}
         <motion.div
-          className={`w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl shadow-xl border-2 transition-all duration-300 cursor-pointer
-            ${isJackTarget ? 'bg-gradient-to-br from-yellow-400 via-yellow-600 to-yellow-900 border-yellow-300' :
-              isMe ? 'bg-gradient-to-br from-blue-500 via-blue-700 to-blue-900 border-blue-300' :
-              'bg-gradient-to-br from-gray-500 via-gray-700 to-gray-900 border-gray-300'}
-            backdrop-blur-md bg-white/20 relative overflow-hidden
-            ${isCurrentPlayer ? (isMe ? 'ring-4 ring-green-500 ring-opacity-75' : 'ring-4 ring-yellow-400 ring-opacity-75') : ''}
-            ${canSelectForJack ? 'hover:bg-yellow-500 hover:border-yellow-300' : ''}`}
+          className={`w-12 h-12 sm:w-16 md:w-20 sm:h-16 md:h-20 rounded-full flex items-center justify-center font-bold text-lg sm:text-xl md:text-2xl shadow-lg md:shadow-xl border-2 transition-all duration-300 cursor-pointer
+            ${isJackTarget ? 'bg-yellow-600 border-yellow-400 ring-4 ring-yellow-300' :
+            isMe ? 'bg-gradient-to-br from-blue-500 via-blue-700 to-blue-900 border-blue-300' : 
+            'bg-gradient-to-br from-gray-500 via-gray-700 to-gray-900 border-gray-300'}
+            ${isCurrentPlayer ? (isMe ? 'ring-4 ring-green-500 ring-opacity-75' : 'ring-4 ring-yellow-400 ring-opacity-75') : ''} 
+            ${canSelectForJack ? 'hover:bg-yellow-500 hover:border-yellow-300' : ''}
+            backdrop-blur-md bg-white/20 relative overflow-hidden`}
           whileHover={{ scale: 1.08 }}
           animate={isCurrentPlayer ? (isMe ? { 
-            boxShadow: ['0 0 32px 8px rgba(34,197,94,0.25)', '0 0 40px 12px rgba(34,197,94,0.35)', '0 0 32px 8px rgba(34,197,94,0.25)']
+            boxShadow: ['0 0 20px rgba(34, 197, 94, 0.6)', '0 0 30px rgba(34, 197, 94, 0.9)', '0 0 20px rgba(34, 197, 94, 0.6)']
           } : { 
-            boxShadow: ['0 0 32px 8px rgba(251,191,36,0.18)', '0 0 40px 12px rgba(251,191,36,0.28)', '0 0 32px 8px rgba(251,191,36,0.18)']
-          }) : {}}
-          transition={{ duration: 2, repeat: Infinity }}
+            boxShadow: ['0 0 20px rgba(251, 191, 36, 0.5)', '0 0 30px rgba(251, 191, 36, 0.8)', '0 0 20px rgba(251, 191, 36, 0.5)']
+          }) : {
+            boxShadow: 'none'
+          }}
+          transition={isCurrentPlayer ? { duration: 2, repeat: Infinity } : { duration: 0.3 }}
         >
           {/* Effet lumineux */}
           <span className="absolute inset-0 rounded-full pointer-events-none" style={{
-            boxShadow: isJackTarget
-              ? '0 0 32px 8px rgba(251,191,36,0.25)'
-              : isMe
-                ? '0 0 32px 8px rgba(59,130,246,0.25)'
-                : '0 0 32px 8px rgba(156,163,175,0.18)'
+            boxShadow: isMe
+              ? '0 0 24px 6px rgba(59,130,246,0.25)'
+              : '0 0 24px 6px rgba(156,163,175,0.18)'
           }} />
           <span className="z-10 text-white drop-shadow-lg">
             {player.pseudo?.charAt(0)?.toUpperCase() || '?'}
           </span>
         </motion.div>
-        {/* Nom du joueur modernisé + indices pour debug */}
-        <div className={`mt-2 text-base font-semibold ${isJackTarget ? 'text-yellow-300' : isMe ? 'text-blue-300' : 'text-gray-300'} drop-shadow-sm`}>
+        
+        {/* Nom du joueur + indices pour debug */}
+        <div className={`mt-1 sm:mt-2 text-xs sm:text-sm md:text-base font-semibold ${
+          isJackTarget ? 'text-yellow-300' : 
+          isMe ? 'text-blue-300' : 'text-gray-300'
+        } drop-shadow-sm`}>
           {isMe ? 'Vous' : player.pseudo}
-          {isCurrentPlayer && <div className="text-xs text-yellow-300">À jouer</div>}
-          {isJackTarget && <div className="text-xs text-yellow-300">Cible sélectionnée</div>}
-          <div className="text-xs text-gray-500">V:{visualIndex} B:{backendIndex}</div>
+          {isCurrentPlayer && <div className="text-[10px] sm:text-xs text-yellow-300">À jouer</div>}
+          {isJackTarget && <div className="text-[10px] sm:text-xs text-yellow-300">Cible</div>}
         </div>
-        {/* Indicateur de cartes en main modernisé */}
+        
+        {/* Indicateur de cartes en main */}
         {player.handSize > 0 && (
-          <div className="mt-1 text-xs text-gray-400 bg-white/10 rounded-full px-2 py-0.5 shadow-sm">
+          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-gray-400 bg-white/10 rounded-full px-1.5 sm:px-2 py-0.5 shadow-sm">
             {player.handSize} carte{player.handSize > 1 ? 's' : ''}
           </div>
         )}
+        
         {/* Animation d'action */}
         <AnimatePresence>
           {actionAnimation && isCurrentPlayer && (
@@ -514,7 +509,7 @@ const GameScreen = () => {
                       (hoveredSlot.action === 'place' ? 'border-green-400 bg-green-400 bg-opacity-20' : 'border-orange-400 bg-orange-400 bg-opacity-20') :
                     canClick ? 'border-blue-400 bg-blue-400 bg-opacity-10' :
                     canSelectForExchange ? 'border-purple-300 bg-purple-300 bg-opacity-10' :
-                    hasCard ? 'border-red-400' : 'border-dashed border-gray-500'
+                    hasCard ? 'border-gray-300' : 'border-dashed border-gray-500'
                   }`}
                   onDragOver={(e) => handleSlotDragOver(e, row, col)}
                   onDragLeave={handleSlotDragLeave}
@@ -526,7 +521,7 @@ const GameScreen = () => {
                     <Card 
                       card={enemy}
                       size="small"
-                      className="shadow-lg border border-red-400 pointer-events-none"
+                      className="shadow-lg border border-gray-300 pointer-events-none"
                     />
                   ) : (
                     <div className="text-gray-500 text-xs pointer-events-none">4</div>
@@ -560,7 +555,7 @@ const GameScreen = () => {
                       (hoveredSlot.action === 'place' ? 'border-green-400 bg-green-400 bg-opacity-20' : 'border-orange-400 bg-orange-400 bg-opacity-20') :
                     canClick ? 'border-blue-400 bg-blue-400 bg-opacity-10' :
                     canSelectForExchange ? 'border-purple-300 bg-purple-300 bg-opacity-10' :
-                    hasCard ? 'border-red-400' : 'border-dashed border-gray-500'
+                    hasCard ? 'border-gray-300' : 'border-dashed border-gray-500'
                   }`}
                   onDragOver={(e) => handleSlotDragOver(e, row, col)}
                   onDragLeave={handleSlotDragLeave}
@@ -572,7 +567,7 @@ const GameScreen = () => {
                     <Card 
                       card={enemy}
                       size="small"
-                      className="shadow-lg border border-red-400 pointer-events-none"
+                      className="shadow-lg border border-gray-300 pointer-events-none"
                     />
                   ) : (
                     <div className="text-gray-500 text-xs pointer-events-none">3</div>
@@ -606,7 +601,7 @@ const GameScreen = () => {
                       (hoveredSlot.action === 'place' ? 'border-green-400 bg-green-400 bg-opacity-20' : 'border-orange-400 bg-orange-400 bg-opacity-20') :
                     canClick ? 'border-blue-400 bg-blue-400 bg-opacity-10' :
                     canSelectForExchange ? 'border-purple-300 bg-purple-300 bg-opacity-10' :
-                    hasCard ? 'border-red-400' : 'border-dashed border-gray-500'
+                    hasCard ? 'border-gray-300' : 'border-dashed border-gray-500'
                   }`}
                   onDragOver={(e) => handleSlotDragOver(e, row, col)}
                   onDragLeave={handleSlotDragLeave}
@@ -618,7 +613,7 @@ const GameScreen = () => {
                     <Card 
                       card={enemy}
                       size="small"
-                      className="shadow-lg border border-red-400 pointer-events-none"
+                      className="shadow-lg border border-gray-300 pointer-events-none"
                     />
                   ) : (
                     <div className="text-gray-500 text-xs pointer-events-none">2</div>
@@ -652,7 +647,7 @@ const GameScreen = () => {
                       (hoveredSlot.action === 'place' ? 'border-green-400 bg-green-400 bg-opacity-20' : 'border-orange-400 bg-orange-400 bg-opacity-20') :
                     canClick ? 'border-blue-400 bg-blue-400 bg-opacity-10' :
                     canSelectForExchange ? 'border-purple-300 bg-purple-300 bg-opacity-10' :
-                    hasCard ? 'border-red-400' : 'border-dashed border-gray-500'
+                    hasCard ? 'border-gray-300' : 'border-dashed border-gray-500'
                   }`}
                   onDragOver={(e) => handleSlotDragOver(e, row, col)}
                   onDragLeave={handleSlotDragLeave}
@@ -664,7 +659,7 @@ const GameScreen = () => {
                     <Card 
                       card={enemy}
                       size="small"
-                      className="shadow-lg border border-red-400 pointer-events-none"
+                      className="shadow-lg border border-gray-300 pointer-events-none"
                     />
                   ) : (
                     <div className="text-gray-500 text-xs pointer-events-none">1</div>
@@ -679,205 +674,316 @@ const GameScreen = () => {
   );
 
   return (
-    <div className="relative w-full h-screen overflow-hidden">
-      
-      {/* Debug info */}
-      <div className="absolute top-0 left-0 z-50 bg-black bg-opacity-50 text-white p-2 text-xs">
-        Phase: {gameState?.phase} | GamePhase: {gamePhase} | Players: {players.length} | Tour: {gameState?.currentPlayerIndex}
-      </div>
+    <div className="relative w-full h-screen overflow-hidden flex flex-col">
 
-      {/* Roi du joueur en bas à gauche */}
-      {myPlayer?.secretKing && (
-        <motion.div
-          className="absolute bottom-12 left-12 z-40"
-          initial={{ scale: 0, rotateY: 180 }}
-          animate={{ scale: 2, rotateY: 0 }}
-          transition={{ delay: 0.5, duration: 0.8, type: "spring" }}
-        >
-          <Card 
-            card={myPlayer.secretKing} 
-            size="small"
-            className="shadow-lg border-2 border-yellow-400"
-          />
-          <div className="text-xs text-yellow-300 text-center mt-1 font-medium">
-            Votre Roi
-          </div>
-        </motion.div>
-      )}
 
-      {/* Roue à emoji en bas à droite */}
-      <motion.div
-        className="absolute bottom-12 right-12 z-40"
-        initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ delay: 0.7, duration: 0.8, type: "spring" }}
-      >
-        <EmojiWheel />
-      </motion.div>
-
-      {/* Titre et informations */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 text-center z-20">
-        <h2 className="text-2xl font-bold text-white mb-2">
+      {/* Titre et informations en haut au milieu - responsive */}
+      <div className="w-full text-center pt-2 sm:pt-4 px-4 z-20">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1 sm:mb-2">
           Partie en cours
         </h2>
-        {specialPowerMode === 'queen' && (
-          <p className="text-purple-300 font-medium">
-            Mode Dame : Sélectionnez 2 cartes à échanger
-          </p>
-        )}
-        {specialPowerMode === 'jack' && (
-          <p className="text-yellow-300 font-medium">
-            Mode Valet : Sélectionnez un joueur et une carte à donner
-          </p>
-        )}
-        {!specialPowerMode && isMyTurn() && myPlayer?.hand?.length > 0 && (
-          <p className="text-green-300">
-            C'est votre tour ! Sélectionnez une carte à jouer
-          </p>
-        )}
-        {!isMyTurn() && (
-          <p className="text-gray-300">
-            En attente de joueur {gameState?.players[gameState?.currentPlayerIndex]?.pseudo || 'un joueur'}
-          </p>
-        )}
+        {/* Texte dynamique uniquement sur desktop */}
+        <div className="hidden sm:block">
+          {specialPowerMode === 'queen' && (
+            <p className="text-xs sm:text-sm text-purple-300 font-medium">
+              Mode Dame : Sélectionnez 2 cartes à échanger
+            </p>
+          )}
+          {specialPowerMode === 'jack' && (
+            <p className="text-xs sm:text-sm text-yellow-300 font-medium">
+              Mode Valet : Sélectionnez un joueur et une carte à donner de votre main
+            </p>
+          )}
+          {!specialPowerMode && isMyTurn() && myPlayer?.hand?.length > 0 && (
+            <p className="text-xs sm:text-sm text-green-300">
+              C'est votre tour ! Sélectionnez une carte à jouer
+            </p>
+          )}
+          {!isMyTurn() && (
+            <p className="text-xs sm:text-sm text-gray-300">
+              En attente de {gameState?.players[gameState?.currentPlayerIndex]?.pseudo || 'un joueur'}
+            </p>
+          )}
+        </div>
       </div>
 
-      {/* Joueurs positionnés autour de l'écran */}
-      {visualPlayers.map((player, visualIndex) => renderPlayer(player, visualIndex))}
+      {/* Cercles des joueurs - responsive: centré sous le titre en dessous de 1300px, en haut à droite au-dessus */}
+      <div className="w-full flex justify-center items-center mt-3 sm:mt-4 xl:mt-0 xl:absolute xl:top-2 xl:right-2 xl:w-auto z-20 flex-wrap">
+        {visualPlayers.map((player, visualIndex) => renderPlayer(player, visualIndex))}
+      </div>
 
       {/* Pyramide des ennemis au centre */}
-      {renderEnemyPyramid()}
+      <div className="flex-1 flex items-center justify-center">
+        {renderEnemyPyramid()}
+      </div>
 
-      {/* Zone de jeu en bas - Main du joueur */}
-      { myPlayer?.hand?.length > 0 && (
-        <motion.div
-          className="absolute bottom-8 w-full flex flex-col items-center"
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          {/* Bouton Passer son tour */}
-          {isMyTurn() && !canPlayAnyCard() && (
-            <div className="mb-2">
-              <Button
-                onClick={handlePassTurn}
-                className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg shadow-lg"
-              >
-                Passer son tour
-              </Button>
-              <div className="text-xs text-yellow-300 mt-1">Aucune action possible, passez votre tour</div>
-            </div>
-          )}
-          {/* Cartes en ligne droite */}
-          <div className="flex justify-center items-end gap-1 mb-4">
-            {myPlayer.hand.map((card, index) => {
-              const isSelected = selectedCards.find(c => c.id === card.id);
-              const isJackGiveSelected = jackGiveCard?.id === card.id;
-              const canSelectForJack = specialPowerMode === 'jack' && !isSelected; // Ne peut pas donner la carte jouée
-              
-              const handleCardClick = () => {
-                if (specialPowerMode === 'jack' && !isSelected) {
-                  handleJackCardSelect(card);
-                } else {
-                  handleCardSelect(card);
-                }
-              };
-              
-              return (
-                <motion.div
-                  key={card.id}
-                  initial={{ y: 100, opacity: 0 }}
-                  animate={{ 
-                    y: 0, 
-                    opacity: 1
-                  }}
-                  whileHover={{
-                    y: -30, // Sort la carte vers le haut au hover
-                    scale: 2.25, // Agrandissement x2.25 (1.5 * 1.5)
-                    zIndex: 50,
-                    transition: { duration: 0.2, ease: "easeOut" }
-                  }}
-                  transition={{ 
-                    delay: index * 0,
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 20,
-                    duration: 0.001 // Transition encore plus rapide pour le retour à la normale
-                  }}
-                  style={{
-                    zIndex: isSelected || isJackGiveSelected ? 40 : 10 + index
-                  }}
-                >
-                  <Card
-                    card={card}
-                    isSelected={isSelected || isJackGiveSelected}
-                    onClick={handleCardClick}
-                    size="large"
-                    className={`transition-all duration-200 ${
-                      isJackGiveSelected ? 'ring-2 ring-yellow-400 ring-opacity-75 shadow-2xl' :
-                      isSelected ? 'ring-2 ring-blue-400 ring-opacity-75 shadow-2xl' : 
-                      canSelectForJack ? 'ring-1 ring-yellow-300 ring-opacity-50 shadow-lg hover:ring-2' :
-                      'shadow-lg'
-                    } scale-150`}
-                    draggable={isMyTurn()}
-                    onDragStart={() => handleDragStart(card)}
-                    onDragEnd={handleDragEnd}
-                  />
-                </motion.div>
-              );
-            })}
-          </div>
-
-          {/* Instructions de jeu */}
-          <div className="text-center text-sm text-gray-300">
-            {specialPowerMode === 'queen' ? (
-              <div className="text-purple-300">
-                <div className="font-medium">Pouvoir de la Dame</div>
-                <div>Sélectionnez 2 cartes dans la pyramide à échanger ({queenExchangeTargets.length}/2)</div>
-                {queenExchangeTargets.length === 2 && (
-                  <div className="text-green-300 mt-1">Cliquez sur un emplacement pour placer la Dame</div>
-                )}
-              </div>
-            ) : specialPowerMode === 'jack' ? (
-              <div className="text-yellow-300">
-                <div className="font-medium">Pouvoir du Valet</div>
-                <div>
-                  1. Sélectionnez un joueur cible {jackTargetPlayer ? '✓' : ''}
-                </div>
-                <div>
-                  2. Sélectionnez une carte à donner {jackGiveCard ? '✓' : ''}
-                </div>
-                {jackTargetPlayer && jackGiveCard && (
-                  <div className="text-green-300 mt-1">Cliquez sur un emplacement pour placer le Valet</div>
-                )}
-              </div>
-            ) : selectedCards.length > 0 ? (
-              <span className="text-blue-300">
-                Cliquez sur un emplacement de la pyramide ou glissez-déposez la carte
-              </span>
-            ) : (
-              <span>
-                Sélectionnez une carte pour jouer
-              </span>
-            )}
-          </div>
-
-          {/* Bouton d'annulation pour les pouvoirs spéciaux */}
+      {/* Main du joueur en 2 lignes sur mobile - entre pyramide et bas */}
+      {myPlayer?.hand?.length > 0 && (
+        <div className="sm:hidden w-full pb-4">
+          {/* Bouton Annuler le coup pour les pouvoirs spéciaux */}
           {specialPowerMode && (
-            <div className="mt-4 flex justify-center">
+            <div className="w-full flex justify-center mb-2">
               <Button
                 onClick={() => {
                   setSelectedCards([]);
                   resetSpecialPowerMode();
                 }}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm shadow-lg"
               >
-                Annuler
+                Annuler le coup
               </Button>
             </div>
           )}
-        </motion.div>
+          
+          <PlayerHandPlayPhase
+            hand={myPlayer.hand}
+            selectedCards={selectedCards}
+            onCardSelect={(card) => {
+              if (specialPowerMode === 'jack' && !selectedCards.find(c => c.id === card.id)) {
+                handleJackCardSelect(card);
+              } else {
+                handleCardSelect(card);
+              }
+            }}
+            jackGiveCard={jackGiveCard}
+            specialPowerMode={specialPowerMode}
+            isMyTurn={isMyTurn()}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          />
+        </div>
       )}
+
+
+
+
+      {/* Barre inférieure avec Emoji - responsive */}
+      <div className="w-full pb-2 sm:pb-4 md:pb-8">
+        {/* Version mobile (< 640px) : disposition avec éléments poussés aux bords */}
+        <div className="sm:hidden flex justify-between items-center px-4 gap-2">
+          {/* Roi du joueur à gauche */}
+          {myPlayer?.secretKing && (
+            <motion.div
+              initial={{ scale: 0, rotateY: 180 }}
+              animate={{ scale: 1.2, rotateY: 0 }}
+              transition={{ delay: 0.5, duration: 0.8, type: "spring" }}
+              className="flex-shrink-0"
+            >
+              <Card 
+                card={myPlayer.secretKing} 
+                size="small"
+                className="shadow-lg border-2 border-yellow-400 scale-75"
+              />
+              <div className="text-[10px] text-yellow-300 text-center mt-0.5 font-medium">
+                Votre Roi
+              </div>
+            </motion.div>
+          )}
+
+          {/* Texte dynamique au centre */}
+          <div className="flex-1 flex items-center justify-center">
+            <div className="max-w-[60%]">
+              {specialPowerMode === 'queen' && (
+                <span className="text-sm text-purple-300 font-semibold text-center block">
+                  {queenExchangeTargets.length < 2 
+                    ? `Mode Dame : Sélectionnez 2 cartes à échanger (${queenExchangeTargets.length}/2)`
+                    : 'Cliquez sur un emplacement pour poser la Dame'
+                  }
+                </span>
+              )}
+              {specialPowerMode === 'jack' && (
+                <span className="text-sm text-yellow-300 font-semibold text-center block">
+                  Mode Valet : Sélectionnez un joueur et une carte de votre main à donner puis cliquez sur un emplacement.
+                </span>
+              )}
+              {!specialPowerMode && isMyTurn() && myPlayer?.hand?.length > 0 && (
+                <span className="text-sm text-green-300 font-semibold text-center block">
+                  C'est votre tour ! Sélectionnez une carte à jouer
+                </span>
+              )}
+              {!isMyTurn() && (
+                <span className="text-sm text-gray-300 font-semibold text-center block">
+                  En attente de {gameState?.players[gameState?.currentPlayerIndex]?.pseudo || 'un joueur'}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Roue à emoji à droite */}
+          <motion.div
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.7, duration: 0.8, type: "spring" }}
+            className="flex-shrink-0 scale-75"
+          >
+            <EmojiWheel />
+          </motion.div>
+        </div>
+
+        {/* Version desktop (>= 640px) : positions absolues et main en ligne */}
+        <div className="hidden sm:block">
+          {/* Roi du joueur en bas à gauche */}
+          {myPlayer?.secretKing && (
+            <motion.div
+              className="absolute bottom-4 left-4 sm:bottom-8 md:bottom-12 sm:left-8 md:left-12 z-40"
+              initial={{ scale: 0, rotateY: 180 }}
+              animate={{ scale: 1.2, rotateY: 0 }}
+              transition={{ delay: 0.5, duration: 0.8, type: "spring" }}
+            >
+              <Card 
+                card={myPlayer.secretKing} 
+                size="small"
+                className="shadow-lg border-2 border-yellow-400 scale-75 sm:scale-100"
+              />
+              <div className="text-[10px] sm:text-xs text-yellow-300 text-center mt-0.5 sm:mt-1 font-medium">
+                Votre Roi
+              </div>
+            </motion.div>
+          )}
+
+          {/* Roue à emoji en bas à droite */}
+          <motion.div
+            className="absolute bottom-4 right-4 sm:bottom-8 md:bottom-12 sm:right-8 md:right-12 z-40 scale-75 sm:scale-90 md:scale-100"
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.7, duration: 0.8, type: "spring" }}
+          >
+            <EmojiWheel />
+          </motion.div>
+
+          {/* Zone de jeu en bas - Main du joueur */}
+          {myPlayer?.hand?.length > 0 && (
+            <motion.div
+              className="w-full flex flex-col items-center"
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              {/* Bouton Passer son tour */}
+              {isMyTurn() && !canPlayAnyCard() && (
+                <div className="mb-2">
+                  <Button
+                    onClick={handlePassTurn}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg shadow-lg"
+                  >
+                    Passer son tour
+                  </Button>
+                  <div className="text-xs text-yellow-300 mt-1">Aucune action possible, passez votre tour</div>
+                </div>
+              )}
+              {/* Cartes en ligne droite */}
+              <div className="flex justify-center items-end gap-0.5 sm:gap-1 mb-2 sm:mb-4 overflow-visible px-2 max-w-full md:max-w-4xl lg:max-w-6xl xl:max-w-7xl">
+                {myPlayer.hand.map((card, index) => {
+                  const isSelected = selectedCards.find(c => c.id === card.id);
+                  const isJackGiveSelected = jackGiveCard?.id === card.id;
+                  const canSelectForJack = specialPowerMode === 'jack' && !isSelected;
+                  
+                  const handleCardClick = () => {
+                    if (specialPowerMode === 'jack' && !isSelected) {
+                      handleJackCardSelect(card);
+                    } else {
+                      handleCardSelect(card);
+                    }
+                  };
+                  
+                  return (
+                    <motion.div
+                      key={card.id}
+                      initial={{ y: 100, opacity: 0 }}
+                      animate={{ 
+                        y: 0, 
+                        opacity: 1
+                      }}
+                      whileHover={{
+                        y: -15,
+                        scale: 1.8,
+                        zIndex: 50,
+                        transition: { duration: 0.2, ease: "easeOut" }
+                      }}
+                      transition={{ 
+                        delay: index * 0,
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 20,
+                        duration: 0.001
+                      }}
+                      style={{
+                        zIndex: isSelected || isJackGiveSelected ? 40 : 10 + index
+                      }}
+                      className="flex-shrink-0"
+                    >
+                      <Card
+                        card={card}
+                        isSelected={isSelected || isJackGiveSelected}
+                        onClick={handleCardClick}
+                        size="large"
+                        className={`transition-all duration-200 scale-90 sm:scale-110 md:scale-150 ${
+                          isJackGiveSelected ? 'ring-2 ring-yellow-400 ring-opacity-75 shadow-2xl' :
+                          isSelected ? 'ring-2 ring-blue-400 ring-opacity-75 shadow-2xl' : 
+                          canSelectForJack ? 'ring-1 ring-yellow-300 ring-opacity-50 shadow-lg hover:ring-2' :
+                          'shadow-lg'
+                        }`}
+                        draggable={isMyTurn()}
+                        onDragStart={() => handleDragStart(card)}
+                        onDragEnd={handleDragEnd}
+                      />
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              {/* Instructions de jeu */}
+              <div className="text-center text-xs sm:text-sm text-gray-300">
+                {specialPowerMode === 'queen' ? (
+                  <div className="text-purple-300">
+                    <div className="font-medium">Pouvoir de la Dame</div>
+                    <div>Sélectionnez 2 cartes dans la pyramide à échanger ({queenExchangeTargets.length}/2)</div>
+                    {queenExchangeTargets.length === 2 && (
+                      <div className="text-green-300 mt-1">Cliquez sur un emplacement pour placer la Dame</div>
+                    )}
+                  </div>
+                ) : specialPowerMode === 'jack' ? (
+                  <div className="text-yellow-300">
+                    <div className="font-medium">Pouvoir du Valet</div>
+                    <div>
+                      1. Sélectionnez un joueur cible {jackTargetPlayer ? '✓' : ''}
+                    </div>
+                    <div>
+                      2. Sélectionnez une carte à donner {jackGiveCard ? '✓' : ''}
+                    </div>
+                    {jackTargetPlayer && jackGiveCard && (
+                      <div className="text-green-300 mt-1">Cliquez sur un emplacement pour placer le Valet</div>
+                    )}
+                  </div>
+                ) : selectedCards.length > 0 ? (
+                  <span className="text-blue-300">
+                    Cliquez sur un emplacement de la pyramide ou glissez-déposez la carte
+                  </span>
+                ) : (
+                  <span>
+                    Sélectionnez une carte pour jouer
+                  </span>
+                )}
+              </div>
+
+              {/* Bouton d'annulation pour les pouvoirs spéciaux */}
+              {specialPowerMode && (
+                <div className="mt-4 flex justify-center">
+                  <Button
+                    onClick={() => {
+                      setSelectedCards([]);
+                      resetSpecialPowerMode();
+                    }}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
+                  >
+                    Annuler
+                  </Button>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </div>
+      </div>
 
     
 
