@@ -152,8 +152,7 @@ export const createUIState = () => ({
   validMoves: [],
   isDragging: false,
   selectedTargets: [],
-  showChat: false,
-  notifications: []
+  showChat: false
 });
 
 /**

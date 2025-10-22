@@ -4,6 +4,7 @@ import { useGameStore } from './stores/gameStore';
 import { useConnectionStore } from './stores/connectionStore';
 import { useUIStore } from './stores/uiStore';
 import { useGameConnection } from './hooks/useGameConnection';
+import pokerTableBg from './assets/poker_table.jpg';
 
 // Composants (à créer)
 import ConnectionScreen from './components/ConnectionScreen';
@@ -12,7 +13,6 @@ import DraftScreen from './components/DraftScreen';
 import GameScreen from './components/GameScreen';
 import ResultsScreen from './components/ResultsScreen';
 import LoadingScreen from './components/LoadingScreen';
-import NotificationToast from './components/ui/NotificationToast';
 
 // Client React Query
 const queryClient = new QueryClient({
@@ -27,7 +27,7 @@ const queryClient = new QueryClient({
 function App() {
   const { gameState } = useGameStore();
   const { isConnected, isConnecting } = useConnectionStore();
-  const { notifications, isLoading } = useUIStore();
+  const { isLoading } = useUIStore();
   const { error } = useGameConnection();
 
   // Déterminer quel écran afficher
@@ -52,6 +52,7 @@ function App() {
       case 'waiting':
         return 'lobby';
       case 'drafting':
+      case 'draft':
         return 'draft';
       case 'playing':
         return 'game';
@@ -63,41 +64,60 @@ function App() {
   };
 
   const currentScreen = getCurrentScreen();
+  const isFullScreenMode = currentScreen === 'draft' || currentScreen === 'game';
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-gradient-to-br from-game-bg to-pyramid-bg text-white">
-        <div className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <header className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
-              Regicide
-            </h1>
-            <p className="text-gray-300 mt-2">
-              Jeu de cartes stratégique multijoueur
-            </p>
-          </header>
-
-          {/* Main Content */}
-          <main className="flex-1">
-            {currentScreen === 'connection' && <ConnectionScreen />}
-            {currentScreen === 'loading' && <LoadingScreen />}
-            {currentScreen === 'lobby' && <LobbyScreen />}
+      <div 
+        className="fixed inset-0 w-full h-full overflow-hidden"
+        style={{
+          backgroundImage: `url(${pokerTableBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        {/* Overlay pour assombrir légèrement l'image et améliorer la lisibilité */}
+        <div className="absolute inset-0 bg-black bg-opacity-40 z-0"></div>
+        
+        <div className="relative z-10 w-full h-full overflow-y-auto text-white">
+        {isFullScreenMode ? (
+          // Mode plein écran pour DraftScreen et GameScreen
+          <div className="w-full h-full">
             {currentScreen === 'draft' && <DraftScreen />}
             {currentScreen === 'game' && <GameScreen />}
-            {currentScreen === 'results' && <ResultsScreen />}
-          </main>
+          </div>
+        ) : (
+          // Mode normal avec header et footer pour les autres écrans
+          <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 min-h-full flex flex-col">
+            {/* Header */}
+            <header className="text-center mb-4 sm:mb-6 lg:mb-8">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+                Regicide
+              </h1>
+              <p className="text-gray-300 mt-1 sm:mt-2 text-xs sm:text-sm lg:text-base">
+                Jeu de cartes stratégique multijoueur
+              </p>
+            </header>
 
-          {/* Footer */}
-          <footer className="text-center mt-8 text-gray-400 text-sm">
-            <p>
-              Développé avec React, Vite et Colyseus
-            </p>
-          </footer>
+            {/* Main Content */}
+            <main className="flex-1 flex items-center justify-center">
+              {currentScreen === 'connection' && <ConnectionScreen />}
+              {currentScreen === 'loading' && <LoadingScreen />}
+              {currentScreen === 'lobby' && <LobbyScreen />}
+              {currentScreen === 'results' && <ResultsScreen />}
+            </main>
+
+            {/* Footer */}
+            <footer className="text-center mt-4 sm:mt-6 lg:mt-8 text-gray-400 text-xs sm:text-sm">
+              <p>
+                Développé avec React, Vite et Colyseus
+              </p>
+            </footer>
+          </div>
+        )}
+
         </div>
-
-        {/* Notifications */}
-        <NotificationToast notifications={notifications} />
       </div>
     </QueryClientProvider>
   );

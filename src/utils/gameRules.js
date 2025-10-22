@@ -235,6 +235,11 @@ export const isPyramidComplete = (pyramid) => {
  * Obtient l'affichage d'une valeur de carte
  */
 export const getCardDisplayValue = (card) => {
+  // Vérifier que la carte et sa valeur existent
+  if (!card || card.value === undefined || card.value === null) {
+    return '?';
+  }
+  
   switch (card.value) {
     case CARD_VALUES.ACE:
       return 'A';

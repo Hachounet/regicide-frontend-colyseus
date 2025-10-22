@@ -2,10 +2,70 @@ import React from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { 
-  getCardDisplayValue, 
-  getSuitSymbol, 
-  isRedCard 
+  getCardDisplayValue
 } from '../../utils/gameRules.js';
+
+// Fonction pour obtenir le chemin de l'image d'une carte
+const getCardImagePath = (card) => {
+  if (!card || card.value === undefined || card.value === null || !card.suit) {
+    return new URL('../../assets/cards/back_blue.png', import.meta.url).href;
+  }
+
+  let value = card.value;
+  let suit = card.suit.toLowerCase();
+
+  // Conversion des valeurs spéciales
+  switch (card.value) {
+    case 1:
+      value = 'ace';
+      break;
+    case 11:
+      value = 'jack';
+      break;
+    case 12:
+      value = 'queen';
+      break;
+    case 13:
+      value = 'king';
+      break;
+    default:
+      // Vérifier que value est bien défini avant de faire toString()
+      if (card.value !== undefined && card.value !== null) {
+        value = card.value.toString();
+      } else {
+        return new URL('../../assets/cards/back_blue.png', import.meta.url).href;
+      }
+  }
+
+  // Conversion des couleurs en anglais
+  switch (suit) {
+    case 'coeur':
+    case 'coeurs':
+    case 'heart':
+      suit = 'hearts';
+      break;
+    case 'carreau':
+    case 'carreaux':
+    case 'diamond':
+      suit = 'diamonds';
+      break;
+    case 'trèfle':
+    case 'trefle':
+    case 'trèfles':
+    case 'trefles':
+    case 'club':
+      suit = 'clubs';
+      break;
+    case 'pique':
+    case 'piques':
+    case 'spade':
+      suit = 'spades';
+      break;
+  }
+
+  const fileName = `${value}_${suit}.png`;
+  return new URL(`../../assets/cards/${fileName}`, import.meta.url).href;
+};
 
 const Card = ({
   card,
@@ -16,36 +76,34 @@ const Card = ({
   onMouseEnter,
   onMouseLeave,
   className = '',
-  size = 'medium'
+  size = 'medium',
+  showBack = false // Nouvelle prop pour afficher le dos de la carte
 }) => {
-  const displayValue = getCardDisplayValue(card);
-  const suitSymbol = getSuitSymbol(card.suit);
-  const isRed = isRedCard(card);
+  // Si pas de carte ou carte invalide, afficher le dos
+  const shouldShowBack = showBack || !card || card.value === undefined || card.value === null;
+  
+  const cardImagePath = shouldShowBack ? 
+    new URL('../../assets/cards/back_blue.png', import.meta.url).href : 
+    getCardImagePath(card);
   
   const sizeClasses = {
-    small: 'w-12 h-16 text-xs',
-    medium: 'w-16 h-24 text-sm',
-    large: 'w-20 h-28 text-base'
+    small: 'w-12 h-16',
+    medium: 'w-16 h-24',
+    large: 'w-20 h-28',
+    xlarge: 'w-24 h-36'
   };
 
   const cardClasses = `
     ${sizeClasses[size]}
     card-base
-    bg-white
-    border-2
+    relative
     rounded-lg
     shadow-md
-    flex
-    flex-col
-    items-center
-    justify-between
-    p-2
     transition-all
     duration-200
-    ${isSelected ? 'card-selected border-blue-500 transform -translate-y-2 shadow-lg' : ''}
-    ${isValidMove ? 'card-valid-move border-green-500 ring-2 ring-green-500 ring-opacity-50' : ''}
+    ${isSelected ? 'card-selected transform -translate-y-2 shadow-lg scale-110' : ''}
+    ${isValidMove ? 'card-valid-move ring-2 ring-green-500 ring-opacity-50' : ''}
     ${isDisabled ? 'card-invalid-move opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg'}
-    ${isRed ? 'text-red-600' : 'text-gray-800'}
     ${className}
   `.trim();
 
@@ -72,25 +130,18 @@ const Card = ({
       onMouseLeave={onMouseLeave}
       layout
     >
-      {/* Valeur en haut à gauche */}
-      <div className="self-start font-bold leading-none">
-        {displayValue}
-      </div>
-      
-      {/* Symbole au centre */}
-      <div className="text-2xl font-bold">
-        {suitSymbol}
-      </div>
-      
-      {/* Valeur en bas à droite (inversée) */}
-      <div className="self-end font-bold leading-none transform rotate-180">
-        {displayValue}
-      </div>
+      {/* Image de la carte */}
+      <img 
+        src={cardImagePath}
+        alt={showBack ? 'Dos de carte' : `${getCardDisplayValue(card)} de ${card?.suit || 'inconnue'}`}
+        className="w-full h-full object-cover rounded-lg"
+        draggable={false}
+      />
       
       {/* Indicateurs visuels */}
       {isSelected && (
         <motion.div
-          className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full"
+          className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 300 }}
@@ -99,7 +150,7 @@ const Card = ({
       
       {isValidMove && (
         <motion.div
-          className="absolute -top-1 -left-1 w-3 h-3 bg-green-500 rounded-full"
+          className="absolute -top-1 -left-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 300, delay: 0.1 }}

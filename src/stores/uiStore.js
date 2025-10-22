@@ -10,7 +10,6 @@ const initialState = {
   selectedTargets: [],
   maxTargets: 0,
   showChat: false,
-  notifications: [],
   isLoading: false,
   showRules: false,
   showSettings: false,
@@ -96,31 +95,6 @@ export const useUIStore = create((set, get) => ({
   // Actions d'interface
   toggleChat: () => {
     set({ showChat: !get().showChat });
-  },
-
-  addNotification: (message) => {
-    const { notifications } = get();
-    set({ notifications: [...notifications, message] });
-    
-    // Auto-suppression après 5 secondes
-    setTimeout(() => {
-      const currentNotifications = get().notifications;
-      const index = currentNotifications.indexOf(message);
-      if (index >= 0) {
-        get().removeNotification(index);
-      }
-    }, 5000);
-  },
-
-  removeNotification: (index) => {
-    const { notifications } = get();
-    set({ 
-      notifications: notifications.filter((_, i) => i !== index) 
-    });
-  },
-
-  clearNotifications: () => {
-    set({ notifications: [] });
   },
 
   setLoading: (loading) => {

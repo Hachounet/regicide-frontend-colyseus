@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useGameStore } from '../stores/gameStore.js';
 import { useConnectionStore } from '../stores/connectionStore.js';
-import { useUIStore } from '../stores/uiStore.js';
+import { useUIStore } from '../stores/uiStore.js'; // Utilisé uniquement pour setLoading et reset
 import gameService from '../services/gameService.js';
 
 export const useGameConnection = () => {
@@ -23,7 +23,6 @@ export const useGameConnection = () => {
   } = useConnectionStore();
   
   const { 
-    addNotification, 
     setLoading,
     reset: resetUIStore 
   } = useUIStore();
@@ -37,6 +36,25 @@ export const useGameConnection = () => {
       console.log('🎮 State reçu du serveur:', state);
       setGameState(state);
     });
+    // Fin de partie avec scores
+    room.onMessage('game_finished', (data) => {
+      // On fusionne les scores et le gagnant dans gameState
+      setGameState(prev => {
+        // prev peut être null si la partie vient juste de finir
+        const base = typeof prev === 'function' ? prev() : prev;
+        return {
+          ...(base || {}),
+          phase: 'finished',
+          winner: data.winner?.sessionId || data.winner,
+          finalScores: data.finalScores || [],
+        };
+      });
+      console.log(
+        data.winner?.pseudo
+          ? `Partie terminée ! Gagnant : ${data.winner.pseudo} (${data.winner.score} pts)`
+          : 'Partie terminée !'
+      );
+    });
 
     // Messages du serveur
     room.onMessage('waiting_for_players', (data) => {
@@ -44,25 +62,33 @@ export const useGameConnection = () => {
     });
 
     room.onMessage('player_ready_update', (data) => {
-      addNotification(`${data.pseudo} ${data.isReady ? 'est prêt' : 'n\'est plus prêt'}`);
+      console.log(`${data.pseudo} ${data.isReady ? 'est prêt' : 'n\'est plus prêt'}`);
     });
 
     room.onMessage('draft_started', (data) => {
-      addNotification(`Phase de draft commencée - Round ${data.round}`);
+      console.log(`Phase de draft commencée - Round ${data.round}`);
       setLoading(false);
     });
 
     room.onMessage('draft_pack_received', (data) => {
-      addNotification(`Nouveau paquet reçu - Choisissez ${data.pickCount} carte(s)`);
+      console.log(`Nouveau paquet reçu - Choisissez ${data.pickCount} carte(s)`);
+    });
+
+    room.onMessage('draft_pick_confirmed', () => {
+      console.log('Sélection confirmée, en attente des autres joueurs...');
+    });
+
+    room.onMessage('draft_pack_passed', () => {
+      console.log('Les paquets changent de mains !');
     });
 
     room.onMessage('draft_complete', () => {
-      addNotification('Phase de draft terminée - La partie commence !');
+      console.log('Phase de draft terminée - La partie commence !');
     });
 
     room.onMessage('turn_changed', (data) => {
       const isMyTurn = data.currentPlayerSessionId === room.sessionId;
-      addNotification(
+      console.log(
         isMyTurn 
           ? 'C\'est votre tour !' 
           : `C'est au tour de ${data.currentPseudo}`
@@ -71,20 +97,20 @@ export const useGameConnection = () => {
 
     room.onMessage('card_placed', (data) => {
       const isMe = data.playerSessionId === room.sessionId;
-      addNotification(
+      console.log(
         `${isMe ? 'Vous avez' : data.pseudo + ' a'} placé ${data.card.value} de ${data.card.suit}`
       );
     });
 
     room.onMessage('special_power_activated', (data) => {
       const isMe = data.playerSessionId === room.sessionId;
-      addNotification(
+      console.log(
         `${isMe ? 'Vous avez' : data.pseudo + ' a'} activé: ${data.power}`
       );
     });
 
     room.onMessage('game_over', (data) => {
-      addNotification(
+      console.log(
         data.winner ? 
         `Partie terminée ! Gagnant: ${data.winner}` : 
         'Partie terminée - Égalité'
@@ -92,7 +118,7 @@ export const useGameConnection = () => {
     });
 
     room.onMessage('error', (data) => {
-      addNotification(`Erreur: ${data.message}`);
+      console.error(`Erreur: ${data.message}`);
     });
 
     // Handler pour éviter les warnings du playground Colyseus
@@ -107,11 +133,11 @@ export const useGameConnection = () => {
       
       if (code !== 1000) { // Code 1000 = déconnexion normale
         setError('Connexion perdue');
-        addNotification('Connexion perdue, tentative de reconnexion...');
+        console.warn('Connexion perdue, tentative de reconnexion...');
       }
     });
 
-  }, [setGameState, addNotification, setLoading, setConnected, setError]);
+  }, [setGameState, setLoading, setConnected, setError]);
 
   /**
    * Reconnexion automatique
@@ -124,7 +150,7 @@ export const useGameConnection = () => {
 
     try {
       incrementReconnectAttempts();
-      addNotification('Tentative de reconnexion...');
+  console.log('Tentative de reconnexion...');
       
       // Pour l'instant, on fait une nouvelle connexion avec le pseudo existant
       const room = await gameService.joinRoom(playerPseudo);
@@ -137,7 +163,7 @@ export const useGameConnection = () => {
       setConnected(true);
       setRoomId(room.id);
       setMySessionId(room.sessionId);
-      addNotification('Reconnexion réussie !');
+  console.log('Reconnexion réussie !');
       
       return true;
       
@@ -146,7 +172,7 @@ export const useGameConnection = () => {
       setError('Échec de la reconnexion');
       return false;
     }
-  }, [canReconnect, incrementReconnectAttempts, addNotification, playerPseudo, setupRoomListeners, setConnected, setRoomId, setMySessionId, setError]);
+  }, [canReconnect, incrementReconnectAttempts, playerPseudo, setupRoomListeners, setConnected, setRoomId, setMySessionId, setError]);
 
   /**
    * Se connecter à une room
@@ -181,18 +207,18 @@ export const useGameConnection = () => {
       setMySessionId(room.sessionId);
       setConnecting(false);
       
-      addNotification('Connexion établie !');
+  console.log('Connexion établie !');
       return true;
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion';
       setError(errorMessage);
-      addNotification(`Erreur: ${errorMessage}`);
+  console.error(`Erreur: ${errorMessage}`);
       return false;
     } finally {
       setConnecting(false);
     }
-  }, [playerPseudo, setConnecting, setConnected, setError, setRoomId, setMySessionId, addNotification, setupRoomListeners]);
+  }, [playerPseudo, setConnecting, setConnected, setError, setRoomId, setMySessionId, setupRoomListeners]);
 
   /**
    * Se déconnecter
@@ -202,12 +228,13 @@ export const useGameConnection = () => {
       await gameService.leaveRoom();
       setConnected(false);
       setRoomId(null);
+      setError(null); // Réinitialiser l'erreur lors d'une déconnexion volontaire
       resetGameStore();
-      addNotification('Déconnecté');
+  console.log('Déconnecté');
     } catch (err) {
       console.error('Erreur lors de la déconnexion:', err);
     }
-  }, [setConnected, setRoomId, resetGameStore, addNotification]);
+  }, [setConnected, setRoomId, setError, resetGameStore]);
 
   /**
    * Reset complet
@@ -227,10 +254,9 @@ export const useGameConnection = () => {
       return true;
     } catch (err) {
       console.error('Erreur envoi message:', err);
-      addNotification('Erreur lors de l\'envoi du message');
       return false;
     }
-  }, [addNotification]);
+  }, []);
 
   return {
     connect,
