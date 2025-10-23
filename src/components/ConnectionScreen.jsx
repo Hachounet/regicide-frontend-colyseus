@@ -90,14 +90,11 @@ const ConnectionScreen = () => {
               {[3, 4].map((count) => (
                 <button
                   key={count}
-                  onClick={count === 3 ? undefined : () => setPlayerCount(count)}
-                  disabled={count === 3}
+                  onClick={() => setPlayerCount(count)}
                   className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition-colors text-sm sm:text-base ${
-                    count === 3
-                      ? 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-60'
-                      : playerCount === count
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white/20 text-gray-300 hover:bg-white/30'
+                    playerCount === count
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white/20 text-gray-300 hover:bg-white/30'
                   }`}
                 >
                   {count} joueurs
