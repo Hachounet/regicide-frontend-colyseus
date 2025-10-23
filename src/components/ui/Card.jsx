@@ -87,7 +87,7 @@ const Card = ({
     getCardImagePath(card);
   
   const sizeClasses = {
-    small: 'w-12 h-16',
+    small: 'w-10 h-14 sm:w-12 sm:h-16',
     medium: 'w-16 h-24',
     large: 'w-20 h-28',
     xlarge: 'w-24 h-36'

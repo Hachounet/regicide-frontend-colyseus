@@ -160,8 +160,13 @@ const GameScreen = () => {
     const leftSupport = getCardAt(row - 1, leftSupportCol);
     const rightSupport = getCardAt(row - 1, rightSupportCol);
     
-    return (leftSupport && leftSupport.suit === card.suit) || 
-           (rightSupport && rightSupport.suit === card.suit);
+    // Les DEUX supports doivent exister et ne pas être vides
+    if (!leftSupport || leftSupport.isEmpty || !rightSupport || rightSupport.isEmpty) {
+      return false;
+    }
+    
+    // Au moins un des deux supports doit avoir la même famille que la carte à poser
+    return (leftSupport.suit === card.suit) || (rightSupport.suit === card.suit);
   };
 
   const canReplaceCard = (newCard, row, col) => {

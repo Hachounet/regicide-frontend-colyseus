@@ -197,9 +197,9 @@ const DraftScreen = () => {
           Phase de Draft
         </h2>
         <div className="text-xs sm:text-sm text-gray-300 max-w-xs sm:max-w-md mx-auto leading-snug">
-          Piochez 2 cartes, passez le reste au voisin de gauche.<br className="hidden sm:block" />
+          Piochez 1 cartes, passez le reste au voisin de gauche.<br className="hidden sm:block" />
           <span className="sm:hidden"> </span>
-          Piochez 1 carte parmi les 2 restantes, passez la dernière.<br className="hidden sm:block" />
+          Piochez 1 carte parmi les 2/3 restantes, passez le reste.<br className="hidden sm:block" />
           <span className="sm:hidden"> </span>
           Piochez la dernière carte reçue.
         </div>

@@ -38,7 +38,7 @@ const PlayerHandPlayPhase = ({
           isSelected={isSelected || isJackGiveSelected}
           onClick={handleCardClick}
           size="small"
-          className={`transition-all duration-200 scale-90 ${
+          className={`transition-all duration-200 ${
             isJackGiveSelected ? 'ring-2 ring-yellow-400 ring-opacity-75 shadow-2xl' :
             isSelected ? 'ring-2 ring-blue-400 ring-opacity-75 shadow-2xl' : 
             canSelectForJack ? 'ring-1 ring-yellow-300 ring-opacity-50 shadow-lg hover:ring-2' :
