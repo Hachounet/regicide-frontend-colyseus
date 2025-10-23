@@ -13,24 +13,24 @@ class GameService {
    */
   async joinRoom(pseudo, options = {}) {
     try {
+      const mode = options.mode || 'public'; // 'public', 'create', 'join'
       const roomOptions = {
         playerCount: options.playerCount || 4,
-        isPrivate: options.isPrivate || false,
+        isPrivate: mode !== 'public',
         roomCode: options.roomCode || null,
         pseudo: pseudo
       };
 
-      console.log('Tentative de connexion avec:', { roomOptions });
+      console.log('Tentative de connexion avec:', { mode, roomOptions });
 
-      // Essayons d'abord de rejoindre une room existante
-      try {
-        this.room = await this.client.join('regicide', roomOptions);
-        console.log('Rejoint une room existante, ID:', this.room.roomId);
-      } catch (joinError) {
-        console.log('Aucune room trouvée, création d\'une nouvelle room...', joinError.message);
-        // Si ça échoue, créons une nouvelle room
+      if (mode === 'create') {
+        // Créer une room privée
         this.room = await this.client.create('regicide', roomOptions);
-        console.log('Nouvelle room créée, ID:', this.room.roomId);
+        console.log('Room privée créée, ID:', this.room.roomId, 'Code:', options.roomCode);
+      } else {
+        // Rejoindre ou créer une room publique/privée
+        this.room = await this.client.joinOrCreate('regicide', roomOptions);
+        console.log('Rejoint/créé une room, ID:', this.room.roomId);
       }
 
       return this.room;
