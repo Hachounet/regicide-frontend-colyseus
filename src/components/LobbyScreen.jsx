@@ -85,10 +85,27 @@ const LobbyScreen = () => {
 
   // Informations sur la room
   const roomInfo = gameState?.roomInfo || {};
+  
+  // Parser gameOptions si c'est une chaîne JSON
+  let gameOptions = {};
+  if (gameState?.gameOptions) {
+    try {
+      gameOptions = typeof gameState.gameOptions === 'string' 
+        ? JSON.parse(gameState.gameOptions) 
+        : gameState.gameOptions;
+    } catch (e) {
+      console.error('Erreur lors du parsing de gameOptions:', e);
+    }
+  }
+  
   const readyCount = players.filter(player => player.isReady).length;
   const totalCount = players.length;
-  const minRequired = roomInfo.minPlayers || 4;
-
+  const requiredPlayers = gameOptions.playerCount || gameState?.playerCount || roomInfo.playerCount || 4; // Nombre de joueurs pour cette partie
+  const minRequired = requiredPlayers; // Utilise le nombre de joueurs requis pour la partie
+  
+  console.log('ℹ️ Game options:', gameOptions);
+  console.log('ℹ️ Required players:', requiredPlayers);
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -203,7 +220,7 @@ const LobbyScreen = () => {
           ) : (
             <div className="bg-yellow-600/20 border border-yellow-500 rounded-lg p-3 sm:p-4">
               <p className="text-yellow-400 text-xs sm:text-sm">
-                En attente de {minRequired - readyCount} joueur(s) supplémentaire(s)
+                En attente de {requiredPlayers - totalCount} joueur(s) supplémentaire(s) (partie à {requiredPlayers} joueurs)
               </p>
             </div>
           )}
