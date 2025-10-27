@@ -107,7 +107,7 @@ src/
 
 ```env
 # URL du serveur Colyseus
-VITE_COLYSEUS_URL=ws://localhost:2567
+VITE_COLYSEUS_URL=wss://regicide-frontend-colyseus.onrender.com
 
 # Environnement
 VITE_NODE_ENV=development
