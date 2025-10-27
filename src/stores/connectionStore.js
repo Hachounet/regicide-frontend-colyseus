@@ -6,7 +6,7 @@ const initialState = {
   isConnecting: false,
   error: null,
   roomId: null,
-  serverUrl: 'ws://localhost:2567',
+  serverUrl: 'wss://regicide-backend-colyseus.onrender.com',
   playerPseudo: '',
   lastRoomId: null,
   reconnectAttempts: 0,
