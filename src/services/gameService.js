@@ -3,7 +3,7 @@ import { Client } from 'colyseus.js';
 class GameService {
   constructor() {
     // URL du serveur Colyseus - à ajuster selon l'environnement
-    const serverUrl = 'ws://localhost:2567'; // TODO: configurer via .env
+    const serverUrl = 'wss://regicide-backend-colyseus.onrender.com'; // TODO: configurer via .env
     this.client = new Client(serverUrl);
     this.room = null;
   }
@@ -39,16 +39,19 @@ class GameService {
       console.error('Erreur détaillée lors de la connexion:', error);
       console.error('Stack trace:', error.stack);
       
+      // Extraire le message d'erreur de manière sûre
+      const errorMessage = error?.message || error?.toString() || 'Erreur inconnue';
+      
       // Gestion spécifique de l'erreur rootSchema
-      if (error.message.includes('rootSchema')) {
+      if (errorMessage.includes('rootSchema')) {
         throw new Error('Le serveur backend ne définit pas de schéma valide. Vérifiez la configuration côté serveur.');
       }
       
-      if (error.code === 4212) {
+      if (error?.code === 4212) {
         throw new Error('Room non trouvée ou serveur indisponible');
       }
       
-      throw new Error(`Impossible de rejoindre la partie: ${error.message}`);
+      throw new Error(`Impossible de rejoindre la partie: ${errorMessage}`);
     }
   }
 
