@@ -8,6 +8,7 @@ import EmojiWheel from './ui/EmojiWheel.jsx';
 import PlayerHandMobile from './ui/PlayerHandMobile.jsx';
 import PlayerHandPlayPhase from './ui/PlayerHandPlayPhase.jsx';
 import { CARD_VALUES, GAME_ACTIONS } from '../types/game.js';
+import PlayerRing from './PlayerRing.jsx';
 
 const GameScreen = () => {
   const { gameState, mySessionId, getMyPlayer } = useGameStore();
@@ -52,18 +53,13 @@ const GameScreen = () => {
   // Réorganiser les joueurs pour l'affichage visuel
   const getVisualPlayerOrder = () => {
     if (!myPlayer || players.length === 0) return [];
-    
-    // Trouver l'index du joueur actuel dans le tableau
     const myIndex = players.findIndex(p => p.sessionId === mySessionId);
     if (myIndex === -1) return players;
-    
-    // Réorganiser pour que le joueur actuel soit en position 0
     const reorderedPlayers = [];
     for (let i = 0; i < players.length; i++) {
       const playerIndex = (myIndex + i) % players.length;
       reorderedPlayers.push(players[playerIndex]);
     }
-    
     return reorderedPlayers;
   };
 
@@ -177,6 +173,10 @@ const GameScreen = () => {
     
     // Spécifique rangée 1: valeur >= requise (règle serveur)
     if (row === 1) {
+      // Correction : un As peut remplacer un Roi (ou toute figure) en rangée 1
+      if (newCard.type === 'ace' && ['jack', 'queen', 'king'].includes(existingCard.type)) {
+        return true;
+      }
       return (typeof newCard.value === 'number' && typeof existingCard.value === 'number')
         ? newCard.value >= existingCard.value
         : false;
@@ -191,7 +191,7 @@ const GameScreen = () => {
 
     if (tN === 'ace' && ['jack', 'queen', 'king'].includes(tE)) return true;
     if (tN === 'ace' && tE === 'ace') return true;
-    if (tN === 'ace' && tE === 'number') return false;
+    if (tN === 'ace' && tE === 'number' ) return false;
     if (tE === 'ace' && tN !== 'ace') return true;
     if (tN === 'number' && tE === 'number') return vN >= vE;
     if (tN === 'jack') return ['ace', 'number', 'jack'].includes(tE);
@@ -229,9 +229,9 @@ const GameScreen = () => {
     }
   };
 
-  // Gestion de la sélection de joueur cible pour le Valet
+  // Ajoute cette fonction pour la sélection du joueur cible pour le Valet
   const handleJackPlayerSelect = (player) => {
-    if (player.sessionId === mySessionId) return; // Ne peut pas se donner une carte à soi-même
+    if (player.sessionId === mySessionId) return;
     setJackTargetPlayer(player);
   };
 
@@ -394,89 +394,6 @@ const GameScreen = () => {
   // Vérifier si une position est sélectionnée pour l'échange (Dame)
   const isQueenExchangeTarget = (row, col) => {
     return queenExchangeTargets.some(target => target.row === row && target.col === col);
-  };
-
-  // Rendu d'un joueur
-  const renderPlayer = (player, visualIndex) => {
-    const isMe = player.sessionId === mySessionId;
-    const isCurrentPlayer = gameState?.players[gameState?.currentPlayerIndex]?.sessionId === player.sessionId;
-    const isJackTarget = jackTargetPlayer?.sessionId === player.sessionId;
-    const canSelectForJack = specialPowerMode === 'jack' && !isMe;
-    
-    return (
-      <motion.div
-        key={player.sessionId}
-        className="flex flex-col items-center mx-2 sm:mx-3 md:mx-4"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: visualIndex * 0.2 }}
-        onClick={canSelectForJack ? () => handleJackPlayerSelect(player) : undefined}
-      >
-        {/* Avatar du joueur avec indicateur de tour */}
-        <motion.div
-          className={`w-12 h-12 sm:w-16 md:w-20 sm:h-16 md:h-20 rounded-full flex items-center justify-center font-bold text-lg sm:text-xl md:text-2xl shadow-lg md:shadow-xl border-2 transition-all duration-300 cursor-pointer
-            ${isJackTarget ? 'bg-yellow-600 border-yellow-400 ring-4 ring-yellow-300' :
-            isMe ? 'bg-gradient-to-br from-blue-500 via-blue-700 to-blue-900 border-blue-300' : 
-            'bg-gradient-to-br from-gray-500 via-gray-700 to-gray-900 border-gray-300'}
-            ${isCurrentPlayer ? (isMe ? 'ring-4 ring-green-500 ring-opacity-75' : 'ring-4 ring-yellow-400 ring-opacity-75') : ''} 
-            ${canSelectForJack ? 'hover:bg-yellow-500 hover:border-yellow-300' : ''}
-            backdrop-blur-md bg-white/20 relative overflow-hidden`}
-          whileHover={{ scale: 1.08 }}
-          animate={isCurrentPlayer ? (isMe ? { 
-            boxShadow: ['0 0 20px rgba(34, 197, 94, 0.6)', '0 0 30px rgba(34, 197, 94, 0.9)', '0 0 20px rgba(34, 197, 94, 0.6)']
-          } : { 
-            boxShadow: ['0 0 20px rgba(251, 191, 36, 0.5)', '0 0 30px rgba(251, 191, 36, 0.8)', '0 0 20px rgba(251, 191, 36, 0.5)']
-          }) : {
-            boxShadow: 'none'
-          }}
-          transition={isCurrentPlayer ? { duration: 2, repeat: Infinity } : { duration: 0.3 }}
-        >
-          {/* Effet lumineux */}
-          <span className="absolute inset-0 rounded-full pointer-events-none" style={{
-            boxShadow: isMe
-              ? '0 0 24px 6px rgba(59,130,246,0.25)'
-              : '0 0 24px 6px rgba(156,163,175,0.18)'
-          }} />
-          <span className="z-10 text-white drop-shadow-lg">
-            {player.pseudo?.charAt(0)?.toUpperCase() || '?'}
-          </span>
-        </motion.div>
-        
-        {/* Nom du joueur + indices pour debug */}
-        <div className={`mt-1 sm:mt-2 text-xs sm:text-sm md:text-base font-semibold ${
-          isJackTarget ? 'text-yellow-300' : 
-          isMe ? 'text-blue-300' : 'text-gray-300'
-        } drop-shadow-sm`}>
-          {isMe ? 'Vous' : player.pseudo}
-          {isCurrentPlayer && <div className="text-[10px] sm:text-xs text-yellow-300">À jouer</div>}
-          {isJackTarget && <div className="text-[10px] sm:text-xs text-yellow-300">Cible</div>}
-        </div>
-        
-        {/* Indicateur de cartes en main */}
-        {player.handSize > 0 && (
-          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-gray-400 bg-white/10 rounded-full px-1.5 sm:px-2 py-0.5 shadow-sm">
-            {player.handSize} carte{player.handSize > 1 ? 's' : ''}
-          </div>
-        )}
-        
-        {/* Animation d'action */}
-        <AnimatePresence>
-          {actionAnimation && isCurrentPlayer && (
-            <motion.div
-              className="absolute top-0 w-6 h-6 bg-green-500 rounded-full"
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ 
-                opacity: [0, 1, 1, 0],
-                scale: [0, 1.5, 1.5, 0],
-                y: [-20, -40, -40, -60]
-              }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 1 }}
-            />
-          )}
-        </AnimatePresence>
-      </motion.div>
-    );
   };
 
   // Pyramide des ennemis au centre
@@ -680,8 +597,6 @@ const GameScreen = () => {
 
   return (
     <div className="relative w-full h-screen overflow-hidden flex flex-col">
-
-
       {/* Titre et informations en haut au milieu - responsive */}
       <div className="w-full text-center pt-2 sm:pt-4 px-4 z-20">
         <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1 sm:mb-2">
@@ -712,9 +627,23 @@ const GameScreen = () => {
         </div>
       </div>
 
-      {/* Cercles des joueurs - responsive: centré sous le titre en dessous de 1300px, en haut à droite au-dessus */}
-      <div className="w-full flex justify-center items-center mt-3 sm:mt-4 xl:mt-0 xl:absolute xl:top-2 xl:right-2 xl:w-auto z-20 flex-wrap">
-        {visualPlayers.map((player, visualIndex) => renderPlayer(player, visualIndex))}
+      {/* Cercles des joueurs */}
+      <div
+        className="
+          w-full
+          flex justify-center items-center mt-3 sm:mt-4
+          xl:mt-0 xl:absolute xl:top-4 xl:right-4 xl:w-auto
+          z-20 flex-wrap
+        "
+      >
+        <PlayerRing
+          players={visualPlayers}
+          mySessionId={mySessionId}
+          currentPlayerId={gameState?.players?.[gameState?.currentPlayerIndex]?.sessionId}
+          jackTargetMode={specialPowerMode === 'jack'}
+          onJackTargetSelect={handleJackPlayerSelect}
+          jackTargetPlayerId={jackTargetPlayer?.sessionId}
+        />
       </div>
 
       {/* Pyramide des ennemis au centre */}
@@ -758,9 +687,6 @@ const GameScreen = () => {
           />
         </div>
       )}
-
-
-
 
       {/* Barre inférieure avec Emoji - responsive */}
       <div className="w-full pb-2 sm:pb-4 md:pb-8">
@@ -866,14 +792,16 @@ const GameScreen = () => {
             >
               {/* Bouton Passer son tour */}
               {isMyTurn() && !canPlayAnyCard() && (
-                <div className="mb-2">
-                  <Button
-                    onClick={handlePassTurn}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg shadow-lg"
-                  >
-                    Passer son tour
-                  </Button>
-                  <div className="text-xs text-yellow-300 mt-1">Aucune action possible, passez votre tour</div>
+                <div className="mb-2 flex justify-center w-full">
+                  <div className="flex flex-col items-center w-full">
+                    <Button
+                      onClick={handlePassTurn}
+                      className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg shadow-lg mx-auto"
+                    >
+                      Passer son tour
+                    </Button>
+                    <div className="text-xs text-yellow-300 mt-1 text-center">Aucune action possible, passez votre tour</div>
+                  </div>
                 </div>
               )}
               {/* Cartes en ligne droite */}

@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { SERVER_URL } from '../../config';
 
 const initialState = {
   isConnected: false,
   isConnecting: false,
   error: null,
   roomId: null,
-  serverUrl: 'wss://regicide-backend-colyseus.onrender.com',
+  serverUrl: SERVER_URL,
   playerPseudo: '',
   lastRoomId: null,
   reconnectAttempts: 0,

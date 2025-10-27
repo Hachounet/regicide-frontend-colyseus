@@ -60,3 +60,23 @@ body {
     @apply bg-gray-400 cursor-not-allowed;
   }
 }
+
+/* Forcer 100% viewport et désactiver le scrolling global (y compris mobile rebond) */
+html, body, #root {
+  height: 100%;
+  min-height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;              /* aucun scroll global */
+  overscroll-behavior: none;     /* empêche le "bounce" mobile */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Classe utilitaire complémentaire (si besoin pour composants) */
+.fullscreen-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}

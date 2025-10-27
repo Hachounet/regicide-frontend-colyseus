@@ -1,9 +1,9 @@
 import { Client } from 'colyseus.js';
-
+import { SERVER_URL } from '../../config.js';
 class GameService {
   constructor() {
     // URL du serveur Colyseus - à ajuster selon l'environnement
-    const serverUrl = 'wss://regicide-backend-colyseus.onrender.com'; // TODO: configurer via .env
+    const serverUrl = SERVER_URL;
     this.client = new Client(serverUrl);
     this.room = null;
   }

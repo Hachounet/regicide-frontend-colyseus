@@ -68,7 +68,7 @@ function App() {
   const currentScreen = getCurrentScreen();
   const isFullScreenMode = currentScreen === 'draft' || currentScreen === 'game';
 
-  return (
+   return (
     <QueryClientProvider client={queryClient}>
       <div 
         className="fixed inset-0 w-full h-full overflow-hidden"
@@ -85,20 +85,20 @@ function App() {
         {/* Notification de reconnexion */}
         <ReconnectionNotification />
         
-        <div className="relative z-10 w-full h-full overflow-y-auto text-white">
-        {isFullScreenMode ? (
+         <div className="relative z-10 w-full h-full overflow-hidden text-white antialiased">
+  {isFullScreenMode ? (
           // Mode plein écran pour DraftScreen et GameScreen
-          <div className="w-full h-full">
+          <div className="w-full h-full absolute inset-0">
             {currentScreen === 'draft' && <DraftScreen />}
             {currentScreen === 'game' && <GameScreen />}
           </div>
         ) : (
           // Mode normal avec header et footer pour les autres écrans
-          <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 min-h-full flex flex-col">
+          <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 max-h-full flex flex-col overflow-hidden">
             <Header />
 
             {/* Main Content */}
-            <main className="flex-1 flex items-center justify-center">
+            <main className="flex-1 flex items-center justify-center overflow-hidden">
               {currentScreen === 'connection' && <ConnectionScreen />}
               {currentScreen === 'loading' && <LoadingScreen />}
               {currentScreen === 'lobby' && <LobbyScreen />}
