@@ -19,7 +19,13 @@ export const useGameConnection = () => {
     playerPseudo,
     incrementReconnectAttempts,
     canReconnect,
-    reset: resetConnectionStore
+    reset: resetConnectionStore,
+    setReconnectionToken,
+    clearReconnectionToken,
+    hasReconnectionToken,
+    reconnectionToken,
+    roomId,
+    setReconnecting,
   } = useConnectionStore();
   
   const { 
@@ -31,6 +37,21 @@ export const useGameConnection = () => {
    * Configurer les listeners de la room
    */
   const setupRoomListeners = useCallback((room) => {
+    // Sauvegarder le token de reconnexion
+    room.onMessage("reconnection_token", (message) => {
+      console.log('📝 Token de reconnexion reçu');
+      setReconnectionToken(message.token);
+    });
+
+    // Notifications de reconnexion/déconnexion
+    room.onMessage("player_reconnected", (message) => {
+      console.log(`✅ ${message.pseudo} s'est reconnecté`);
+    });
+
+    room.onMessage("player_disconnected", (message) => {
+      console.log(`❌ ${message.pseudo} s'est déconnecté pendant ${message.phase}`);
+    });
+
     // État du jeu
     room.onStateChange((state) => {
       console.log('🎮 State reçu du serveur:', state);
@@ -133,11 +154,16 @@ export const useGameConnection = () => {
       
       if (code !== 1000) { // Code 1000 = déconnexion normale
         setError('Connexion perdue');
-        console.warn('Connexion perdue, tentative de reconnexion...');
+        console.warn('⚠️ Connexion perdue, tentative de reconnexion...');
+        // La reconnexion sera gérée automatiquement via useEffect dans App.jsx
+      } else {
+        // Déconnexion volontaire : nettoyer le token
+        console.log('👋 Déconnexion volontaire');
+        clearReconnectionToken();
       }
     });
 
-  }, [setGameState, setLoading, setConnected, setError]);
+  }, [setGameState, setLoading, setConnected, setError, setReconnectionToken, clearReconnectionToken]);
 
   /**
    * Reconnexion automatique
@@ -145,34 +171,64 @@ export const useGameConnection = () => {
   const reconnect = useCallback(async () => {
     if (!canReconnect()) {
       setError('Nombre maximum de tentatives de reconnexion atteint');
+      clearReconnectionToken();
+      return false;
+    }
+
+    // Vérifier si on a un token de reconnexion
+    if (!hasReconnectionToken()) {
+      console.warn('Aucun token de reconnexion disponible');
+      setError('Impossible de se reconnecter');
       return false;
     }
 
     try {
       incrementReconnectAttempts();
-  console.log('Tentative de reconnexion...');
+      setReconnecting(true);
+      console.log('🔄 Tentative de reconnexion...', { tentative: useConnectionStore.getState().reconnectAttempts });
       
-      // Pour l'instant, on fait une nouvelle connexion avec le pseudo existant
-      const room = await gameService.joinRoom(playerPseudo);
+      // Utiliser le token de reconnexion
+      const room = await gameService.reconnectToRoom(roomId, reconnectionToken);
       
       if (!room) {
-        throw new Error('Impossible de rejoindre la room');
+        throw new Error('Impossible de se reconnecter à la room');
       }
 
       setupRoomListeners(room);
       setConnected(true);
       setRoomId(room.id);
       setMySessionId(room.sessionId);
-  console.log('Reconnexion réussie !');
+      setReconnecting(false);
+      console.log('✅ Reconnexion réussie !');
       
       return true;
       
     } catch (err) {
-      console.error('Échec de la reconnexion:', err);
+      console.error('❌ Échec de la reconnexion:', err);
       setError('Échec de la reconnexion');
+      setReconnecting(false);
+      
+      // Si la reconnexion échoue définitivement, nettoyer le token
+      if (!canReconnect()) {
+        clearReconnectionToken();
+      }
+      
       return false;
     }
-  }, [canReconnect, incrementReconnectAttempts, playerPseudo, setupRoomListeners, setConnected, setRoomId, setMySessionId, setError]);
+  }, [
+    canReconnect, 
+    hasReconnectionToken,
+    incrementReconnectAttempts, 
+    roomId,
+    reconnectionToken,
+    setupRoomListeners, 
+    setConnected, 
+    setRoomId, 
+    setMySessionId, 
+    setError,
+    setReconnecting,
+    clearReconnectionToken,
+  ]);
 
   /**
    * Se connecter à une room
@@ -225,16 +281,18 @@ export const useGameConnection = () => {
    */
   const disconnect = useCallback(async () => {
     try {
-      await gameService.leaveRoom();
+      // Déconnexion volontaire (consented = true)
+      await gameService.leaveRoom(true);
       setConnected(false);
       setRoomId(null);
-      setError(null); // Réinitialiser l'erreur lors d'une déconnexion volontaire
+      setError(null);
+      clearReconnectionToken(); // Nettoyer le token lors d'une déconnexion volontaire
       resetGameStore();
-  console.log('Déconnecté');
+      console.log('👋 Déconnecté volontairement');
     } catch (err) {
       console.error('Erreur lors de la déconnexion:', err);
     }
-  }, [setConnected, setRoomId, setError, resetGameStore]);
+  }, [setConnected, setRoomId, setError, clearReconnectionToken, resetGameStore]);
 
   /**
    * Reset complet

@@ -14,6 +14,7 @@ import GameScreen from './components/GameScreen';
 import ResultsScreen from './components/ResultsScreen';
 import LoadingScreen from './components/LoadingScreen';
 import Header from './components/ui/Header';
+import ReconnectionNotification from './components/ui/ReconnectionNotification';
 
 // Client React Query
 const queryClient = new QueryClient({
@@ -80,6 +81,9 @@ function App() {
       >
         {/* Overlay pour assombrir légèrement l'image et améliorer la lisibilité */}
         <div className="absolute inset-0 bg-black bg-opacity-40 z-0"></div>
+        
+        {/* Notification de reconnexion */}
+        <ReconnectionNotification />
         
         <div className="relative z-10 w-full h-full overflow-y-auto text-white">
         {isFullScreenMode ? (

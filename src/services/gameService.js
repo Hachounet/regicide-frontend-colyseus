@@ -69,11 +69,26 @@ class GameService {
   }
 
   /**
+   * Se reconnecter à une room avec un token de reconnexion
+   */
+  async reconnectToRoom(roomId, reconnectionToken) {
+    try {
+      console.log('Tentative de reconnexion avec token...', { roomId });
+      this.room = await this.client.reconnect(roomId, reconnectionToken);
+      console.log('Reconnexion réussie!');
+      return this.room;
+    } catch (error) {
+      console.error('Erreur lors de la reconnexion:', error);
+      throw new Error('Impossible de se reconnecter à la partie');
+    }
+  }
+
+  /**
    * Quitter la room actuelle
    */
-  async leaveRoom() {
+  async leaveRoom(consented = true) {
     if (this.room) {
-      await this.room.leave();
+      await this.room.leave(consented);
       this.room = null;
     }
   }

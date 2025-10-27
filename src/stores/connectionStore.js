@@ -11,6 +11,8 @@ const initialState = {
   lastRoomId: null,
   reconnectAttempts: 0,
   maxReconnectAttempts: 3,
+  reconnectionToken: null, // Token pour la reconnexion
+  isReconnecting: false, // Flag pour indiquer une reconnexion en cours
 };
 
 export const useConnectionStore = create(
@@ -62,6 +64,23 @@ export const useConnectionStore = create(
         set({ playerPseudo: pseudo });
       },
 
+      // Token de reconnexion
+      setReconnectionToken: (token) => {
+        set({ reconnectionToken: token });
+      },
+
+      clearReconnectionToken: () => {
+        set({ reconnectionToken: null });
+      },
+
+      hasReconnectionToken: () => {
+        return !!get().reconnectionToken && !!get().roomId;
+      },
+
+      setReconnecting: (isReconnecting) => {
+        set({ isReconnecting });
+      },
+
       // Reconnexion
       incrementReconnectAttempts: () => {
         set({ reconnectAttempts: get().reconnectAttempts + 1 });
@@ -84,6 +103,15 @@ export const useConnectionStore = create(
           playerPseudo: get().playerPseudo,
         });
       },
+
+      // Reset complet (utilisé lors d'un départ volontaire)
+      resetAll: () => {
+        set({
+          ...initialState,
+          // Garder uniquement le serverUrl
+          serverUrl: get().serverUrl,
+        });
+      },
     }),
     {
       name: 'regicide-connection',
@@ -92,6 +120,8 @@ export const useConnectionStore = create(
         serverUrl: state.serverUrl,
         playerPseudo: state.playerPseudo,
         lastRoomId: state.lastRoomId,
+        reconnectionToken: state.reconnectionToken, // Persister le token
+        roomId: state.roomId, // Persister le roomId pour la reconnexion
       }),
     }
   )

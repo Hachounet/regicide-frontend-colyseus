@@ -42,17 +42,6 @@ const DraftScreen = () => {
 
   const visualPlayers = getVisualPlayerOrder();
 
-  // Debug: afficher l'état du jeu
-  console.log('DraftScreen Debug:', {
-    gameState,
-    myPlayer,
-    players,
-    visualPlayers,
-    mySessionId,
-    draftPhase,
-    phase: gameState?.phase,
-    draftRound: gameState?.draftRound
-  });
   useEffect(() => {
     if (!gameState) return;
 
@@ -113,14 +102,14 @@ const DraftScreen = () => {
     return (
       <motion.div
         key={player.sessionId}
-        className="flex flex-col items-center mx-2 sm:mx-3 md:mx-4"
+        className="flex flex-col items-center mx-1.5 sm:mx-3 md:mx-4"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: visualIndex * 0.2 }}
       >
         {/* Avatar du joueur modernisé - responsive */}
         <motion.div
-          className={`w-12 h-12 sm:w-16 md:w-20 sm:h-16 md:h-20 rounded-full flex items-center justify-center font-bold text-lg sm:text-xl md:text-2xl shadow-lg md:shadow-xl border-2 transition-all duration-300
+          className={`w-10 h-10 sm:w-16 md:w-20 sm:h-16 md:h-20 rounded-full flex items-center justify-center font-bold text-base sm:text-xl md:text-2xl shadow-lg md:shadow-xl border-2 transition-all duration-300
             ${isMe ? 'bg-gradient-to-br from-blue-500 via-blue-700 to-blue-900 border-blue-300' : 'bg-gradient-to-br from-gray-500 via-gray-700 to-gray-900 border-gray-300'}
             backdrop-blur-md bg-white/20 relative overflow-hidden`}
           whileHover={{ scale: 1.08 }}
@@ -136,12 +125,12 @@ const DraftScreen = () => {
           </span>
         </motion.div>
         {/* Nom du joueur modernisé - responsive */}
-        <div className={`mt-1 sm:mt-2 text-xs sm:text-sm md:text-base font-semibold ${isMe ? 'text-blue-300' : 'text-gray-300'} drop-shadow-sm`}>
+        <div className={`mt-0.5 sm:mt-2 text-[10px] sm:text-sm md:text-base font-semibold ${isMe ? 'text-blue-300' : 'text-gray-300'} drop-shadow-sm`}>
           {isMe ? 'Vous' : player.pseudo}
         </div>
         {/* Indicateur de cartes en main modernisé - responsive */}
         {player.handCount > 0 && (
-          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-gray-400 bg-white/10 rounded-full px-1.5 sm:px-2 py-0.5 shadow-sm">
+          <div className="mt-0.5 sm:mt-1 text-[8px] sm:text-xs text-gray-400 bg-white/10 rounded-full px-1 sm:px-2 py-0.5 shadow-sm">
             {player.handCount} carte{player.handCount > 1 ? 's' : ''}
           </div>
         )}
@@ -186,17 +175,12 @@ const DraftScreen = () => {
 
   return (
     <div className="relative w-full h-screen overflow-hidden flex flex-col">
-      {/* Debug info en haut à gauche - très petit */}
-      <div className="absolute top-1 left-1 z-50 bg-black bg-opacity-50 text-white p-1 text-[8px] sm:text-[10px]">
-        Phase: {gameState?.phase} | DraftPhase: {draftPhase} | Players: {players.length}
-      </div>
-
       {/* Titre et informations en haut au milieu - responsive */}
-      <div className="w-full text-center pt-2 sm:pt-4 px-4 z-20">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1 sm:mb-2">
+      <div className="w-full text-center pt-1 sm:pt-4 px-4 z-20 flex-shrink-0">
+        <h2 className="text-base sm:text-xl md:text-2xl font-bold text-white mb-0.5 sm:mb-2">
           Phase de Draft
         </h2>
-        <div className="text-xs sm:text-sm text-gray-300 max-w-xs sm:max-w-md mx-auto leading-snug">
+        <div className="text-[10px] sm:text-sm text-gray-300 max-w-xs sm:max-w-md mx-auto leading-tight">
           Piochez 1 cartes, passez le reste au voisin de gauche.<br className="hidden sm:block" />
           <span className="sm:hidden"> </span>
           Piochez 1 carte parmi les 2/3 restantes, passez le reste.<br className="hidden sm:block" />
@@ -206,12 +190,12 @@ const DraftScreen = () => {
       </div>
 
       {/* Cercles des joueurs - responsive: centré sous le titre en dessous de 1300px, en haut à droite au-dessus */}
-      <div className="w-full flex justify-center items-center mt-3 sm:mt-4 xl:mt-0 xl:absolute xl:top-2 xl:right-2 xl:w-auto z-20">
+      <div className="w-full flex justify-center items-center mt-1 sm:mt-4 xl:mt-0 xl:absolute xl:top-2 xl:right-2 xl:w-auto z-20 flex-shrink-0">
         {visualPlayers.map((player, visualIndex) => renderPlayer(player, visualIndex))}
       </div>
 
       {/* Zone centrale flexible pour les cartes à choisir */}
-      <div className="flex-1 flex items-center justify-center px-2 sm:px-4 relative">
+      <div className="flex-1 flex items-center justify-center px-2 sm:px-4 relative min-h-0">
         {/* Zone de draft au centre - responsive */}
         {draftPhase === 'drafting' && myPlayer?.draftPack?.length > 0 && (
           <motion.div
@@ -221,7 +205,7 @@ const DraftScreen = () => {
             transition={{ delay: 0.3, duration: 0.5, type: "spring" }}
           >
             {/* Cartes disponibles au centre - responsive */}
-            <div className="flex justify-center gap-2 sm:gap-4 md:gap-8 mb-4 sm:mb-6 md:mb-8 flex-wrap">
+            <div className="flex justify-center gap-1.5 sm:gap-4 md:gap-8 mb-2 sm:mb-6 md:mb-8 flex-wrap">
               {myPlayer.draftPack.map((card, index) => (
                 <motion.div
                   key={card.id}
@@ -241,7 +225,7 @@ const DraftScreen = () => {
                     isSelected={selectedCards.find(c => c.id === card.id)}
                     onClick={() => handleCardSelect(card)}
                     size="large"
-                    className={`transition-all duration-200 scale-75 sm:scale-90 md:scale-110 ${
+                    className={`transition-all duration-200 scale-[0.6] sm:scale-90 md:scale-110 ${
                       selectedCards.find(c => c.id === card.id) 
                         ? 'ring-2 ring-blue-400 ring-opacity-75 shadow-2xl' 
                         : 'shadow-lg hover:shadow-xl'
@@ -288,23 +272,23 @@ const DraftScreen = () => {
       </div>
 
       {/* Barre inférieure avec Roi, Main et Emoji - responsive */}
-      <div className="w-full pb-2 sm:pb-4 md:pb-8">
+      <div className="w-full pb-1 sm:pb-4 md:pb-8 flex-shrink-0">
         {/* Version mobile (< 640px) : disposition horizontale centrée */}
-        <div className="sm:hidden flex justify-center items-center gap-4 px-4">
+        <div className="sm:hidden flex justify-center items-center gap-2 px-2">
           {/* Roi du joueur à gauche */}
           {myPlayer?.secretKing && (
             <motion.div
               initial={{ scale: 0, rotateY: 180 }}
-              animate={{ scale: 1.2, rotateY: 0 }}
+              animate={{ scale: 1, rotateY: 0 }}
               transition={{ delay: 0.5, duration: 0.8, type: "spring" }}
               className="flex-shrink-0"
             >
               <Card 
                 card={myPlayer.secretKing} 
                 size="small"
-                className="shadow-lg border-2 border-yellow-400 scale-75"
+                className="shadow-lg border-2 border-yellow-400 scale-[0.6]"
               />
-              <div className="text-[10px] text-yellow-300 text-center mt-0.5 font-medium">
+              <div className="text-[8px] text-yellow-300 text-center mt-0.5 font-medium">
                 Votre Roi
               </div>
             </motion.div>
@@ -331,7 +315,7 @@ const DraftScreen = () => {
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 0.7, duration: 0.8, type: "spring" }}
-            className="flex-shrink-0 scale-75"
+            className="flex-shrink-0 scale-[0.6]"
           >
             <EmojiWheel />
           </motion.div>
